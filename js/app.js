@@ -23,7 +23,7 @@
       object: 'countries',
       preprojected: false,
       exclude: ['Antarctica', 'Fr. S. Antarctic Lands'],
-      iconFactor: 0.72,
+      iconFactor: 0.62,
       aliases: window.NAMES.COUNTRY_ALIASES
     }
   };
@@ -357,8 +357,12 @@
 
     // icons + labels on top
     const cfg = MAP_CONFIGS[$('map-select').value];
-    const iconSize = parseFloat($('icon-size').value) / 100 * L.W * 0.085 * (cfg.iconFactor || 1);
-    const labelSize = parseFloat($('label-size').value) / 100 * L.W * 0.032;
+    // scale icons to the map area, not the canvas width, so wide canvases
+    // don't get oversized faces
+    const mapH = L.mapBottom - L.mapTop;
+    const iconBase = Math.min(L.W * 0.085, mapH * 0.17);
+    const iconSize = parseFloat($('icon-size').value) / 100 * iconBase * (cfg.iconFactor || 1);
+    const labelSize = parseFloat($('label-size').value) / 100 * Math.min(L.W * 0.032, mapH * 0.062);
     for (let i = 0; i < shown; i++) {
       const r = order[i];
       const c = centroids[r.name];
