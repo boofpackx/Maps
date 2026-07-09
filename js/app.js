@@ -15,7 +15,9 @@
       object: 'states',
       preprojected: true,
       exclude: [],
-      iconFactor: 1,
+      iconFactor: 0.9,
+      areaPow: 0.26,          // states are similar in size — scale gently
+      areaClamp: [0.55, 1.12],
       aliases: window.NAMES.STATE_ALIASES
     },
     world: {
@@ -24,6 +26,8 @@
       preprojected: false,
       exclude: ['Antarctica', 'Fr. S. Antarctic Lands'],
       iconFactor: 0.62,
+      areaPow: 0.38,          // countries span orders of magnitude — scale hard
+      areaClamp: [0.3, 1.6],
       aliases: window.NAMES.COUNTRY_ALIASES
     }
   };
@@ -222,6 +226,8 @@
 
   function rebuildProjection() {
     const cfg = MAP_CONFIGS[$('map-select').value];
+    const areaPow = cfg.areaPow || 0.3;
+    const areaClamp = cfg.areaClamp || [0.5, 1.3];
     const L = layout();
     const extent = [[L.mapPad, L.mapTop], [L.W - L.mapPad, L.mapBottom]];
     const fc = { type: 'FeatureCollection', features: features };
@@ -242,8 +248,9 @@
     areas.sort(function (a, b) { return a - b; });
     const median = areas[Math.floor(areas.length / 2)] || 1;
     Object.keys(areaScale).forEach(function (k) {
-      const s = Math.pow(areaScale[k] / median, 0.3);
-      areaScale[k] = Math.min(1.2, Math.max(0.55, s));
+      // IG style: big regions get big faces, tiny ones get tiny faces
+      const s = Math.pow(areaScale[k] / median, areaPow);
+      areaScale[k] = Math.min(areaClamp[1], Math.max(areaClamp[0], s));
     });
   }
 
@@ -376,14 +383,16 @@
       const az = areaScale[r.name] || 1;
       const s = iconSize * az * pop;
       const img = iconImgs[r.tier];
+      let h = s;
       if (img && img.width) {
-        const h = s * img.height / img.width; // demon faces are wider than tall
-        ctx.drawImage(img, c[0] - s / 2, c[1] - h, s, h);
+        h = s * img.height / img.width; // demon faces are wider than tall
+        // face centered on the region, IG style
+        ctx.drawImage(img, c[0] - s / 2, c[1] - h / 2, s, h);
       }
-      const lz = labelSize * Math.sqrt(az);
+      const lz = labelSize * Math.pow(az, 0.7);
       if (lz > 2) {
         const label = $('label-prefix').value + r.display + $('label-suffix').value;
-        outlinedText(label, c[0], c[1] + lz * 0.75 * pop, lz * pop, '#ffffff', 0.28);
+        outlinedText(label, c[0], c[1] + (h / 2 + lz * 0.62) * pop, lz * pop, '#ffffff', 0.28);
       }
     }
 
