@@ -29,6 +29,20 @@ hundreds of real London traffic cameras plotted on the UK. Click a country to
 filter, use the category chips, or search by name/place. Click any camera to
 watch its live image / video.
 
+### Offline preview (no server, no keys)
+
+`webcams/preview.html` is a single self-contained file that runs the whole hub
+in **embed mode** with 36 sample cameras across 18 countries (placeholder tiles,
+not live frames) — open it straight from disk to see the layout and
+interactions. Regenerate it after UI changes with:
+
+```sh
+node webcams/tools/make-preview.mjs
+```
+
+Embed mode (`window.WC_EMBED = { topo, seed, cameras }`) also lets you ship a
+fully offline build with your own prebuilt catalog inlined.
+
 ## Add more sources (live, in-browser)
 
 Open the **Sources** panel and paste a provider's free key, then hit **Load**:

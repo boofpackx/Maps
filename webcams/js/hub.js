@@ -19,7 +19,8 @@
     seed: null,
     page: 0,
     pageSize: 240,
-    loading: new Set()
+    loading: new Set(),
+    embed: false
   };
 
   var map = { svg: null, g: null, path: null, projection: null, features: null };
@@ -27,6 +28,18 @@
   /* ---------------- init ---------------- */
   function init() {
     wireStaticControls();
+    // Embed mode: everything is inlined (no fetch) — used by the standalone
+    // preview and by fully-offline deployments. window.WC_EMBED carries the
+    // topojson, the source directory, and a prebuilt camera list.
+    if (window.WC_EMBED) {
+      state.embed = true;
+      buildMap(WC_EMBED.topo);
+      state.seed = WC_EMBED.seed || { providers: [], directory: [] };
+      renderSourcesPanel();
+      renderDirectory();
+      ingestCameras(WC_EMBED.cameras || [], 'sample data');
+      return;
+    }
     Promise.all([
       fetch('../data/countries-110m.json').then(function (r) { return r.json(); }),
       fetch('./data/catalog.seed.json').then(function (r) { return r.json(); })
@@ -69,6 +82,7 @@
       .data(fc.features)
       .join('path')
       .attr('class', 'country')
+      .attr('fill', '#26324a')
       .attr('d', map.path)
       .on('click', function (ev, d) {
         var n = d.properties.name;
@@ -87,8 +101,14 @@
   function paintMap() {
     if (!map.g) return;
     var max = 0;
-    state.counts.forEach(function (v) { if (v > max) max = v; });
-    var color = d3.scaleSequential(d3.interpolateYlGnBu).domain([0, Math.max(1, max)]);
+    state.counts.forEach(function (v, k) { if (k !== 'Unknown' && v > max) max = v; });
+    // Dim base -> blue -> bright yellow, clamped so even a single camera is
+    // clearly brighter than the no-data base and reads well on the dark map.
+    var color = d3.scaleLinear()
+      .domain([1, Math.max(2, max)])
+      .range(['#3f7fb3', '#ffd84d'])
+      .interpolate(d3.interpolateRgb)
+      .clamp(true);
     map.g.selectAll('path.country')
       .attr('fill', function (d) {
         var c = state.counts.get(d.properties.name) || 0;
@@ -97,6 +117,16 @@
       .classed('selected', function (d) {
         return d.properties.name === state.filters.country;
       });
+    updateLegend(max);
+  }
+
+  function updateLegend(max) {
+    var el = document.getElementById('map-legend');
+    if (!el) return;
+    if (!max) { el.style.display = 'none'; return; }
+    el.style.display = 'flex';
+    el.innerHTML = '<span>fewer</span><span class="bar"></span>' +
+      '<span>more</span><span class="mx">' + fmt(max) + ' max</span>';
   }
 
   var tip = null;
@@ -142,6 +172,22 @@
     });
   }
 
+  // Merge a batch of already-normalized cameras (from a prebuilt catalog or
+  // embedded sample data) into state and re-render.
+  function ingestCameras(cams, label) {
+    if (!cams || !cams.length) return 0;
+    cams.forEach(function (c) {
+      if (!c.country) c.country = WCGeo.assign(c.lat, c.lon) || c.countryHint || 'Unknown';
+      state.byId.set(c.id, c);
+    });
+    recompute();
+    renderAll();
+    (state.seed.providers || []).forEach(function (p) { reflectProviderRow(p.id); });
+    status('Loaded ' + fmt(cams.length) + ' cameras from ' + (label || 'catalog') +
+      ' · ' + fmt(state.total) + ' total');
+    return cams.length;
+  }
+
   // Load a prebuilt static catalog if one has been generated. Returns a
   // promise of how many cameras were ingested (0 if none / not present).
   function loadStaticCatalog() {
@@ -149,17 +195,7 @@
       if (!r.ok) return 0;
       return r.json().then(function (data) {
         var cams = Array.isArray(data) ? data : (data.cameras || []);
-        if (!cams.length) return 0;
-        cams.forEach(function (c) {
-          if (!c.country) c.country = WCGeo.assign(c.lat, c.lon) || c.countryHint || 'Unknown';
-          state.byId.set(c.id, c);
-        });
-        recompute();
-        renderAll();
-        state.seed.providers.forEach(function (p) { reflectProviderRow(p.id); });
-        status('Loaded ' + fmt(cams.length) + ' cameras from prebuilt catalog · ' +
-          fmt(state.total) + ' total');
-        return cams.length;
+        return ingestCameras(cams, 'prebuilt catalog');
       });
     }).catch(function () { return 0; });
   }
@@ -311,10 +347,16 @@
       var every = (parseInt(img.dataset.refresh, 10) || 120) * 1000;
       if (now - (img._last || 0) < every) return;
       img._last = now;
-      var base = img.dataset.base;
-      img.src = base + (base.indexOf('?') >= 0 ? '&' : '?') + '_=' + now;
+      img.src = bust(img.dataset.base, now);
     });
   }, 15000);
+
+  // Add a cache-buster so a snapshot image reloads — but never mangle a data:
+  // URI (or other non-http source), which has no query string to append to.
+  function bust(url, t) {
+    if (!url || /^data:/i.test(url)) return url;
+    return url + (url.indexOf('?') >= 0 ? '&' : '?') + '_=' + (t || Date.now());
+  }
 
   /* ---------------- modal ---------------- */
   function openModal(c) {
@@ -328,7 +370,7 @@
       body = '<video src="' + esc(c.stream) + '" autoplay muted loop controls playsinline></video>';
     } else if (c.image) {
       body = '<img id="modal-img" data-base="' + esc(c.image) + '" src="' +
-        esc(c.image) + '?_=' + Date.now() + '" alt="">';
+        esc(bust(c.image)) + '" alt="">';
     } else {
       body = '<p class="empty">No viewable stream for this camera.</p>';
     }
@@ -350,6 +392,12 @@
   /* ---------------- sources panel ---------------- */
   function renderSourcesPanel() {
     var wrap = document.getElementById('sources-panel');
+    if (state.embed) {
+      wrap.innerHTML = '<p class="src-note" style="color:var(--accent)">Preview — showing ' +
+        'sample cameras with placeholder tiles. In the full app this panel loads ' +
+        'live feeds (TfL keyless by default; Windy / WSDOT / NPS with a free key).</p>';
+      return;
+    }
     var html = state.seed.providers.map(function (p) {
       var loaded = false; state.byId.forEach(function (c) { if (c.source === p.id) loaded = true; });
       var needsKey = !p.keyless;

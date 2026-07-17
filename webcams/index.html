@@ -89,7 +89,9 @@
   #map { width: 100%; height: auto; display: block; background: transparent; }
   .sphere { fill: #0c1220; }
   .graticule { fill: none; stroke: #223; stroke-width: 0.5; }
-  .country { fill: #26324a; stroke: #0e1522; stroke-width: 0.5; cursor: pointer; transition: fill 0.15s; }
+  /* fill is set per-country via the SVG attribute in paintMap (a CSS fill here
+     would override that attribute and flatten the choropleth). */
+  .country { stroke: #0e1522; stroke-width: 0.5; cursor: pointer; transition: fill 0.15s; }
   .country:hover { stroke: var(--accent); stroke-width: 1; }
   .country.selected { stroke: var(--accent); stroke-width: 1.4; }
   #map-tip {
@@ -97,6 +99,16 @@
     background: #0c1220ee; border: 1px solid var(--border); border-radius: 6px;
     padding: 5px 8px; font-size: 12px; white-space: nowrap;
   }
+  #map-legend {
+    position: absolute; left: 20px; bottom: 8px; display: none; align-items: center;
+    gap: 7px; font-size: 11px; color: var(--muted); background: #0c1220cc;
+    border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px;
+  }
+  #map-legend .bar {
+    width: 84px; height: 8px; border-radius: 4px;
+    background: linear-gradient(90deg, #26324a, #3f7fb3, #ffd84d);
+  }
+  #map-legend .mx { color: var(--text); }
 
   /* grid */
   #grid-head {
@@ -201,6 +213,7 @@
   <div id="map-wrap">
     <svg id="map"></svg>
     <div id="map-tip"></div>
+    <div id="map-legend"></div>
   </div>
   <div id="status"></div>
   <div id="grid-head"></div>
