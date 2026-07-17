@@ -93,6 +93,16 @@ best.)
   Bureau), Albers composite projection with Alaska & Hawaii insets
 - Rendering: [D3](https://d3js.org) + topojson-client, bundled in `vendor/`
 
+## Also in this repo
+
+[**📷 Public Webcam Hub**](webcams/) — a separate static app that aggregates
+**live public webcams** (traffic, transit, scenic, parks, weather) from official
+feeds and organizes them on a by-country world map, reusing the same TopoJSON and
+D3 bundle. Loads Transport for London's keyless JamCams on open; add free API
+keys (Windy, WSDOT, NPS, custom 511/DOT) for global coverage, or bulk-build a
+static catalog offline. Public feeds only — see [`webcams/SOURCES.md`](webcams/SOURCES.md).
+Run it at `http://localhost:8000/webcams/`.
+
 ## Repo layout
 
 ```
