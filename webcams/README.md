@@ -43,6 +43,24 @@ node webcams/tools/make-preview.mjs
 Embed mode (`window.WC_EMBED = { topo, seed, cameras }`) also lets you ship a
 fully offline build with your own prebuilt catalog inlined.
 
+### Open the preview online (GitHub-hosted)
+
+`preview.html` is a single self-contained file, so it renders straight from the
+repo through a raw-HTML proxy — no clone, no server:
+
+- **Instant link (githack):**
+  <https://raw.githack.com/boofpackx/Maps/claude/public-cctv-hub-t8jb1v/webcams/preview.html>
+
+(GitHub's own `raw.githubusercontent.com` serves `.html` as plain text, so it
+shows source rather than the rendered page — githack serves the same file with
+an HTML content type.)
+
+For a permanent `github.io` URL, enable **GitHub Pages** (repo Settings ▸ Pages ▸
+*Deploy from a branch* ▸ root). The site is then served at
+`https://<user>.github.io/Maps/webcams/` (and `/webcams/preview.html` for the
+demo). Pages serves the live app too, which fetches real feeds in the visitor's
+browser.
+
 ## Add more sources (live, in-browser)
 
 Open the **Sources** panel and paste a provider's free key, then hit **Load**:
