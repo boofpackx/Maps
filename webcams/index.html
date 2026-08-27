@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Public Webcam Hub — live cameras by country</title>
+<style>
+  :root {
+    --bg: #10151f; --panel: #1a2230; --panel2: #212b3d;
+    --text: #e8edf5; --muted: #93a1b8; --accent: #ffd84d; --accent2: #5ba7f7;
+    --line: #2c3850; --border: #33415c; --ok: #4ad991; --err: #ff8a8a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--text); display: flex; min-height: 100vh;
+  }
+  aside {
+    width: 340px; min-width: 340px; background: var(--panel); padding: 18px;
+    overflow-y: auto; max-height: 100vh; border-right: 1px solid var(--line);
+  }
+  main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  h1 { font-size: 19px; margin: 0 0 2px; color: var(--accent); }
+  .tagline { font-size: 12px; color: var(--muted); margin: 0 0 14px; line-height: 1.4; }
+  .section { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 6px; }
+  .sec-title {
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent); margin: 8px 0; font-weight: 700;
+  }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; font-weight: 600; }
+  input[type=text], select, textarea {
+    width: 100%; background: var(--panel2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; font-size: 13px;
+  }
+  textarea { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; resize: vertical; }
+  button {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 10px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent2); }
+
+  /* stats */
+  #stats { display: flex; gap: 8px; margin-bottom: 12px; }
+  .stat {
+    flex: 1; background: var(--panel2); border: 1px solid var(--line);
+    border-radius: 10px; padding: 8px 6px; text-align: center;
+  }
+  .stat b { display: block; font-size: 18px; color: var(--accent2); }
+  .stat span { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* chips */
+  #category-filter { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    padding: 4px 9px; font-size: 12px; border-radius: 999px;
+    background: var(--panel2); border: 1px solid var(--border);
+  }
+  .chip span { color: var(--muted); font-weight: 500; }
+  .chip.active { background: var(--accent2); border-color: var(--accent2); color: #0c1524; }
+  .chip.active span { color: #0c1524; }
+
+  /* sources */
+  .src { border: 1px solid var(--line); border-radius: 10px; padding: 8px; margin-bottom: 8px; background: #17202e; }
+  .src-head { display: flex; align-items: center; gap: 8px; }
+  .src-load { flex: 0 0 auto; }
+  .src-info { flex: 1; min-width: 0; line-height: 1.2; }
+  .src-info b { font-size: 12.5px; }
+  .src-info span { display: block; font-size: 10.5px; color: var(--muted); }
+  .src-state { font-size: 11px; color: var(--muted); }
+  .src-state.ok { color: var(--ok); }
+  .src-state.busy { color: var(--accent); }
+  .key-row { margin-top: 7px; }
+  .key, .cfg { margin-top: 4px; }
+  .src-note { font-size: 10.5px; color: var(--muted); margin: 5px 0 0; line-height: 1.35; }
+
+  .dir {
+    display: block; text-decoration: none; color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; margin-bottom: 6px; background: #17202e;
+  }
+  .dir:hover { border-color: var(--accent2); }
+  .dir b { font-size: 12.5px; }
+  .dir span { display: block; font-size: 10.5px; color: var(--muted); }
+
+  #proxy-input { font-size: 11px; }
+  .foot { font-size: 10.5px; color: var(--muted); line-height: 1.5; margin-top: 8px; }
+  .foot b { color: var(--text); }
+
+  /* map */
+  #map-wrap { position: relative; padding: 10px 14px 0; }
+  #map { width: 100%; height: auto; display: block; background: transparent; }
+  .sphere { fill: #0c1220; }
+  .graticule { fill: none; stroke: #223; stroke-width: 0.5; }
+  /* fill is set per-country via the SVG attribute in paintMap (a CSS fill here
+     would override that attribute and flatten the choropleth). */
+  .country { stroke: #0e1522; stroke-width: 0.5; cursor: pointer; transition: fill 0.15s; }
+  .country:hover { stroke: var(--accent); stroke-width: 1; }
+  .country.selected { stroke: var(--accent); stroke-width: 1.4; }
+  #map-tip {
+    position: absolute; display: none; pointer-events: none; z-index: 5;
+    background: #0c1220ee; border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 8px; font-size: 12px; white-space: nowrap;
+  }
+  #map-legend {
+    position: absolute; left: 20px; bottom: 8px; display: none; align-items: center;
+    gap: 7px; font-size: 11px; color: var(--muted); background: #0c1220cc;
+    border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px;
+  }
+  #map-legend .bar {
+    width: 84px; height: 8px; border-radius: 4px;
+    background: linear-gradient(90deg, #26324a, #3f7fb3, #ffd84d);
+  }
+  #map-legend .mx { color: var(--text); }
+
+  /* grid */
+  #grid-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 10px 16px 6px; font-size: 13px; color: var(--muted);
+  }
+  #grid-head button { padding: 4px 9px; font-size: 12px; }
+  #grid {
+    flex: 1; display: grid; gap: 10px; padding: 4px 16px 16px; overflow-y: auto;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    align-content: start;
+  }
+  .cam {
+    margin: 0; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; overflow: hidden; cursor: pointer; position: relative;
+  }
+  .cam:hover { border-color: var(--accent2); }
+  .thumb { width: 100%; aspect-ratio: 16/10; object-fit: cover; display: block; background: #0c1220; }
+  .thumb.noimg { display: flex; align-items: center; justify-content: center; color: var(--accent2); font-weight: 700; font-size: 13px; }
+  figcaption { padding: 7px 8px; }
+  .c-name { display: block; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .c-meta { display: block; font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+  .c-src {
+    position: absolute; top: 6px; right: 6px; font-size: 9px; text-transform: uppercase;
+    letter-spacing: 0.05em; background: #0c1220cc; border: 1px solid var(--border);
+    border-radius: 5px; padding: 1px 5px; color: var(--muted);
+  }
+  #grid-more { padding: 0 16px 20px; }
+  #grid-more button { width: 100%; }
+  .empty { color: var(--muted); font-size: 13px; padding: 30px; text-align: center; }
+  #status { padding: 6px 16px; font-size: 11.5px; color: var(--muted); min-height: 22px; }
+  #status.err { color: var(--err); }
+
+  /* modal */
+  #modal {
+    position: fixed; inset: 0; z-index: 50; background: #060a12dd;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  #modal.hidden { display: none; }
+  .modal-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    max-width: 900px; width: 100%; max-height: 92vh; overflow: hidden; display: flex; flex-direction: column;
+  }
+  .modal-top { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; }
+  .modal-top .t { flex: 1; min-width: 0; }
+  #modal-title { font-size: 15px; font-weight: 700; }
+  #modal-sub { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+  #modal-sub a { color: var(--accent2); }
+  #modal-sub .attrib { display: block; margin-top: 2px; font-style: italic; }
+  #modal-close { flex: 0 0 auto; }
+  #modal-body { background: #000; display: flex; align-items: center; justify-content: center; min-height: 200px; }
+  #modal-body img, #modal-body video, #modal-body iframe {
+    max-width: 100%; max-height: 76vh; width: 100%; border: 0; display: block; aspect-ratio: 16/9;
+  }
+  #modal-body img { object-fit: contain; }
+
+  @media (max-width: 720px) {
+    body { flex-direction: column; }
+    aside { width: 100%; min-width: 0; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); }
+  }
+</style>
+</head>
+<body>
+<aside>
+  <h1>📷 Public Webcam Hub</h1>
+  <p class="tagline">Live public cameras — traffic, transit, scenic, parks &amp; weather — aggregated from official feeds and organized by country. Public feeds only.</p>
+
+  <div id="stats"></div>
+
+  <label for="search">Search cameras</label>
+  <input type="text" id="search" placeholder="name or place…">
+
+  <div class="section">
+    <p class="sec-title">Category</p>
+    <div id="category-filter"></div>
+  </div>
+
+  <div class="section">
+    <p class="sec-title">Country</p>
+    <select id="country-filter"><option value="">All countries</option></select>
+  </div>
+
+  <div class="section">
+    <p class="sec-title">Sources — load live cameras</p>
+    <div id="sources-panel"></div>
+    <label for="proxy-input">Advanced · CORS proxy base (optional)</label>
+    <input type="text" id="proxy-input" placeholder="https://your-proxy/?url=">
+    <p class="src-note">Prepended to blocked requests as proxyBase + encoded URL. Keys stay in your browser (localStorage).</p>
+  </div>
+
+  <div class="section">
+    <p class="sec-title">More sources (browse)</p>
+    <div id="directory"></div>
+  </div>
+
+  <div class="section">
+    <p class="foot"><b>Scope:</b> only cameras their operators publish for public viewing. This hub does not include or link to private or unsecured security cameras. See <a href="SOURCES.md" style="color:var(--accent2)">SOURCES.md</a>.</p>
+  </div>
+</aside>
+
+<main>
+  <div id="map-wrap">
+    <svg id="map"></svg>
+    <div id="map-tip"></div>
+    <div id="map-legend"></div>
+  </div>
+  <div id="status"></div>
+  <div id="grid-head"></div>
+  <div id="grid"></div>
+  <div id="grid-more"></div>
+</main>
+
+<div id="modal" class="hidden">
+  <div class="modal-card">
+    <div class="modal-top">
+      <div class="t">
+        <div id="modal-title"></div>
+        <div id="modal-sub"></div>
+      </div>
+      <button id="modal-close">✕ Close</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script src="../vendor/d3.min.js"></script>
+<script src="../vendor/topojson-client.min.js"></script>
+<script src="js/countries.js"></script>
+<script src="js/providers.js"></script>
+<script src="js/hub.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+{
+  "_comment": "Curated directory of PUBLIC-FACING webcam sources. Every entry is an official portal or a documented public API that publishes cameras intended for public viewing (traffic, transit, weather, scenic, wildlife, parks). No private/unsecured cameras. `providers` are wired into the live client-side adapters in js/providers.js; `directory` entries are browse-only links shown in the Sources panel.",
+  "providers": [
+    {
+      "id": "tfl",
+      "name": "Transport for London — JamCams",
+      "org": "Transport for London",
+      "scope": "United Kingdom (Greater London)",
+      "country": "United Kingdom",
+      "category": "traffic",
+      "keyless": true,
+      "count": "~900",
+      "page": "https://www.tfl.gov.uk/traffic/status",
+      "apiDocs": "https://api-portal.tfl.gov.uk/",
+      "attribution": "Powered by TfL Open Data. Contains OS data © Crown copyright and database rights.",
+      "notes": "Open data. Works without a key at modest rates; a free key raises the limit. Still images + 9s video clips refreshed every ~3 min."
+    },
+    {
+      "id": "windy",
+      "name": "Windy Webcams",
+      "org": "Windyty, SE",
+      "scope": "Global",
+      "country": null,
+      "category": "mixed",
+      "keyless": false,
+      "count": "70,000+",
+      "page": "https://www.windy.com/webcams",
+      "apiDocs": "https://api.windy.com/webcams/docs",
+      "attribution": "Webcams provided by Windy.com",
+      "notes": "The largest global public-webcam database, categorized (landscape, city, traffic, beach, harbor, mountain...). Free API key required (x-windy-api-key header). Best fetched via the build tool or a proxy because of the header + CORS."
+    },
+    {
+      "id": "wsdot",
+      "name": "WSDOT Highway Cameras",
+      "org": "Washington State DOT",
+      "scope": "United States (Washington)",
+      "country": "United States of America",
+      "category": "traffic",
+      "keyless": false,
+      "count": "~700",
+      "page": "https://wsdot.com/travel/real-time/map",
+      "apiDocs": "https://wsdot.wa.gov/traffic/api/",
+      "attribution": "Data courtesy of WSDOT",
+      "notes": "Free access code (register once). Statewide traffic camera snapshots."
+    },
+    {
+      "id": "nps",
+      "name": "US National Park Service Webcams",
+      "org": "National Park Service",
+      "scope": "United States (national parks)",
+      "country": "United States of America",
+      "category": "nature",
+      "keyless": false,
+      "count": "~400",
+      "page": "https://www.nps.gov/subjects/watchingwildlife/webcams.htm",
+      "apiDocs": "https://www.nps.gov/subjects/developer/api-documentation.htm",
+      "attribution": "Courtesy of the U.S. National Park Service",
+      "notes": "Free NPS Developer key (get one at api.nps.gov). Streaming and snapshot cams in national parks."
+    },
+    {
+      "id": "custom511",
+      "name": "Generic 511 / DOT camera feed",
+      "org": "Various Departments of Transportation",
+      "scope": "Configurable (US states, Canadian provinces, etc.)",
+      "country": null,
+      "category": "traffic",
+      "keyless": false,
+      "count": "varies",
+      "page": "https://en.wikipedia.org/wiki/511_(traffic)",
+      "apiDocs": "https://511ny.org/developers/help",
+      "attribution": "Courtesy of the operating DOT / 511 service",
+      "notes": "A field-mapping adapter for any JSON/GeoJSON camera feed that exposes name + lat/lon + image URL. Point it at 511NY, 511GA, FL511, 511ON, Caltrans CCTV, DriveBC, NDW, etc. Most need a free per-service key."
+    }
+  ],
+  "directory": [
+    { "name": "Windy.com Webcams", "scope": "Global", "category": "mixed", "url": "https://www.windy.com/webcams", "notes": "Browse 70k+ public webcams on a map." },
+    { "name": "Skyline Webcams", "scope": "Global", "category": "scenic", "url": "https://www.skylinewebcams.com/", "notes": "Curated live public cams — cities, beaches, nature, wildlife." },
+    { "name": "WebcamTaxi", "scope": "Global", "category": "scenic", "url": "https://www.webcamtaxi.com/", "notes": "Curated public live streams (mostly official YouTube feeds)." },
+    { "name": "EarthCam", "scope": "Global", "category": "city", "url": "https://www.earthcam.com/", "notes": "Large network of public webcams in cities and landmarks." },
+    { "name": "Explore.org Live Cams", "scope": "Global", "category": "nature", "url": "https://explore.org/livecams", "notes": "Public wildlife and nature livestreams." },
+    { "name": "Caltrans QuickMap CCTV", "scope": "US — California", "category": "traffic", "url": "https://quickmap.dot.ca.gov/", "notes": "California DOT public traffic cameras." },
+    { "name": "511NY Cameras", "scope": "US — New York", "category": "traffic", "url": "https://511ny.org/", "notes": "NY State traffic cameras. Free developer key." },
+    { "name": "FL511", "scope": "US — Florida", "category": "traffic", "url": "https://fl511.com/", "notes": "Florida DOT traffic cameras." },
+    { "name": "Ontario 511", "scope": "Canada — Ontario", "category": "traffic", "url": "https://511on.ca/", "notes": "Ontario MTO traffic cameras." },
+    { "name": "DriveBC", "scope": "Canada — British Columbia", "category": "traffic", "url": "https://www.drivebc.ca/", "notes": "BC highway webcams (public snapshots)." },
+    { "name": "Transport for NSW — Live Traffic", "scope": "Australia — NSW", "category": "traffic", "url": "https://www.livetraffic.com/", "notes": "Sydney/NSW traffic cameras. Open Data API (free key)." },
+    { "name": "Rijkswaterstaat / NDW", "scope": "Netherlands", "category": "traffic", "url": "https://www.ndw.nu/", "notes": "Dutch national road authority open camera data." },
+    { "name": "USGS Volcano Cams", "scope": "US", "category": "nature", "url": "https://www.usgs.gov/programs/VHP/volcano-webcams", "notes": "Public volcano monitoring cameras." },
+    { "name": "NOAA / National Data Buoy Center", "scope": "Global oceans", "category": "weather", "url": "https://www.ndbc.noaa.gov/", "notes": "Some coastal/buoy cameras and imagery." }
+  ]
+}

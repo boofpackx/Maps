@@ -1,0 +1,35 @@
+[
+  {
+    "source": "511ny",
+    "sourceName": "511NY Traffic Cameras",
+    "url": "https://511ny.org/api/getcameras?format=json",
+    "keyEnv": "N511_KEY",
+    "keyParam": "key",
+    "arrayPath": "",
+    "category": "traffic",
+    "countryHint": "United States of America",
+    "attribution": "Courtesy of 511NY / NYSDOT",
+    "mapping": {
+      "id": "ID",
+      "name": "Name",
+      "lat": "Latitude",
+      "lon": "Longitude",
+      "image": "Url",
+      "page": "DirectionOfTravel"
+    }
+  },
+  {
+    "source": "example-geojson",
+    "sourceName": "Example GeoJSON camera feed",
+    "url": "https://example.gov/cameras.geojson",
+    "arrayPath": "features",
+    "category": "traffic",
+    "mapping": {
+      "id": "properties.id",
+      "name": "properties.name",
+      "lat": "geometry.coordinates.1",
+      "lon": "geometry.coordinates.0",
+      "image": "properties.imageUrl"
+    }
+  }
+]
